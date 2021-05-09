@@ -1,13 +1,25 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:circular_countdown/circular_countdown.dart';
 import 'package:flutter/material.dart';
 import 'package:lostark_pattern/model/biackiss.dart';
 import 'package:lostark_pattern/page/base.dart';
 import 'package:lostark_pattern/widget/circle_selector.dart';
 
-class BiackissPage extends BaseStatelessWidget {
+mixin Biackiss {
+  String get name => "비아키스";
+}
+
+abstract class BiackissPatternPage extends BaseStatefulWidget {
+  late final String _imagePath;
+  late final String _dataPath;
+}
+
+abstract class _BiackissPatternPageState
+    extends BaseState<BiackissPatternPage> {
+  Future<List<BiackissShape>> getData() => getAssetJsonData(widget._dataPath)
+      .then((data) => BiackissPattern.fromJson(data))
+      .then((data) => data.patterns);
+}
+
+class BiackissSelectPatternPage extends BaseStatelessWidget with Biackiss {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -33,18 +45,6 @@ class BiackissPage extends BaseStatelessWidget {
   }
 }
 
-abstract class BiackissPatternPage extends BaseStatefulWidget {
-  late final String _imagePath;
-  late final String _dataPath;
-  final _random = Random();
-}
-
-abstract class _BiackissPatternPageState extends State<BiackissPatternPage> {
-  Future<List<BiackissShape>> getData(context) => DefaultAssetBundle.of(context)
-      .loadString(widget._dataPath)
-      .then((data) => BiackissPattern.fromJson(json.decode(data)).patterns);
-}
-
 class BiackissStatuePage extends BiackissPatternPage {
   @override
   String get _imagePath => "assets/image/biackiss_statue.png";
@@ -62,25 +62,29 @@ class _BiackissStatuePageState extends _BiackissPatternPageState {
   @override
   void initState() {
     super.initState();
-    getData(context).then((patterns) {
+    getData().then((patterns) {
+      _patterns = patterns;
       setState(() {
-        _patterns = patterns;
+        _patterns.shuffle();
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final index = widget._random.nextInt(max(_patterns.length - 1, 1));
     return Scaffold(
       body: SafeArea(
         child: CircleSelector(
-          _patterns.isNotEmpty ? _patterns[index].data : [],
+          _patterns.last.data,
           widget._imagePath,
-          onClickItem: () {
-            setState(() {
-              _patterns.removeAt(index);
-            });
+          onClickItem: (BiackissShapeItem item) {
+            if (item.answer) {
+              setState(() {
+                _patterns.removeLast();
+              });
+            } else {
+
+            }
           },
         ),
       ),
@@ -105,39 +109,26 @@ class _BiackissSwordPageState extends _BiackissPatternPageState {
   @override
   void initState() {
     super.initState();
-    getData(context).then((patterns) {
+    getData().then((patterns) {
       setState(() {
         _patterns = patterns;
+        _patterns.shuffle();
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final index = widget._random.nextInt(max(_patterns.length - 1, 1));
     return Scaffold(
       body: SafeArea(
-        child: Row(
-          children: [
-            TimeCircularCountdown(
-              countdownTotal: 5,
-              unit: CountdownUnit.second,
-              onFinished: () {
-                setState(() {
-                  _patterns.removeAt(index);
-                });
-              },
-            ),
-            CircleSelector(
-              _patterns.isNotEmpty ? _patterns[index].data : [],
-              widget._imagePath,
-              onClickItem: () {
-                setState(() {
-                  _patterns.removeAt(index);
-                });
-              },
-            ),
-          ],
+        child: CircleSelector(
+          _patterns.isNotEmpty ? _patterns.last.data : [],
+          widget._imagePath,
+          onClickItem: (BiackissShapeItem item) {
+            setState(() {
+              _patterns.removeLast();
+            });
+          },
         ),
       ),
     );

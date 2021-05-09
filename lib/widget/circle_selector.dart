@@ -5,7 +5,7 @@ import 'package:lostark_pattern/model/biackiss.dart';
 class CircleSelector extends StatelessWidget {
   final List<BiackissShapeItem> _data;
   final String _imagePath;
-  final VoidCallback onClickItem;
+  final Function(BiackissShapeItem item) onClickItem;
 
   final Function _indexes = memo1((List<BiackissShapeItem> data) =>
       data.map((item) => item.index).toList());
@@ -15,14 +15,13 @@ class CircleSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       child: GridView.builder(
         gridDelegate:
             SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5),
         itemBuilder: (context, i) => _indexes(_data).contains(i)
             ? IconButton(
                 icon: Image.asset(_imagePath),
-                onPressed: onClickItem,
+                onPressed: () => onClickItem(_data.firstWhere((item) => item.index == i)),
               )
             : Container(),
         itemCount: 25,
